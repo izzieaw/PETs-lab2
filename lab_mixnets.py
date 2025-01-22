@@ -282,11 +282,10 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         if hmacs:
             for prev_mac in hmacs:
                 h.update(prev_mac)
-
         h.update(address_cipher)
         h.update(message_cipher)
         exp_mac = h.digest()
-        hmacs[-1] = exp_mac[:20]
+        hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
     address_cipher = ...
     message_cipher = ...
