@@ -287,17 +287,17 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
 
 
         h = HMAC.new(key=hmac_key, digestmod=SHA512)
-        if hmacs[1:]:
-            for prev_mac in hmacs[1:]:
-                h.update(prev_mac)
+        for prev_mac in hmacs: # hmacs[1:] ?
+            h.update(prev_mac)
         h.update(address_cipher)
         h.update(message_cipher)
-        exp_mac = h.digest() ### error here and in this paragraph
+        exp_mac = h.digest() 
+
         hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
         # Encrypt hmacs
-        new_hmacs = []
-        for i, other_mac in enumerate(hmacs[1:]):
+        new_hmacs = [] ## should this be outside of the public key loop?
+        for i, other_mac in enumerate(hmacs[1:]): 
             # Ensure the IV is different for each hmac
             iv = pack("H6s", i, b"\x00" * 6)
 
@@ -306,6 +306,7 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
 
         new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
 
+    ## error in accumulating hmacs for different keys ?
 
     address_cipher = address_cipher
     message_cipher = message_cipher
