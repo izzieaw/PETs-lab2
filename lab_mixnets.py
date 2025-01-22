@@ -287,9 +287,27 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         exp_mac = h.digest()
         hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
-    address_cipher = ...
-    message_cipher = ...
-    hmacs = ...
+        # Encrypt hmacs
+        new_hmacs = []
+        for i, other_mac in enumerate(hmacs[1:]):
+            # Ensure the IV is different for each hmac
+            iv = pack("H6s", i, b"\x00" * 6)
+
+            hmac_plaintext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
+            new_hmacs += [hmac_plaintext]
+
+        new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
+
+        # Encrypt address & message
+        iv = b"\x00" * 8
+
+        address_cipher = aes_ctr_enc_dec(address_key, iv, address_cipher)
+        message_cipher = aes_ctr_enc_dec(message_key, iv, message_cipher)
+
+
+    address_cipher = address_cipher
+    message_cipher = message_cipher
+    hmacs = new_hmacs
     return NHopMixMessage(client_public_key, hmacs, address_cipher, message_cipher)
 
 
