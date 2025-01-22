@@ -140,8 +140,8 @@ def mix_client_one_hop(group: Curve, public_key: PubKey, address: bytes, message
 
     # Calculate HMAC
     h = HMAC.new(key=hmac_key, digestmod=SHA512)
-    h.update(address_plaintext)
-    h.update(message_plaintext)
+    h.update(address_cipher)
+    h.update(message_cipher)
     emac = h.digest()
     expected_mac = emac[:20]
 
