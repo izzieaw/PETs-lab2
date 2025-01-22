@@ -279,16 +279,6 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         message_key = key_material[32:48]
 
 
-        # Encrypt hmacs
-        new_hmacs = []
-        for i, other_mac in enumerate(hmacs[1:]):
-            # Ensure the IV is different for each hmac
-            iv = pack("H6s", i, b"\x00" * 6)
-
-            hmac_plaintext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
-            new_hmacs += [hmac_plaintext]
-
-
         # Encrypt address & message
         iv = b"\x00" * 8
 
@@ -304,8 +294,16 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         exp_mac = h.digest()
         hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
-        new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
+        # Encrypt hmacs
+        new_hmacs = []
+        for i, other_mac in enumerate(hmacs[1:]):
+            # Ensure the IV is different for each hmac
+            iv = pack("H6s", i, b"\x00" * 6)
 
+            hmac_plaintext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
+            new_hmacs += [hmac_plaintext]
+
+        new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
 
 
     address_cipher = address_cipher
