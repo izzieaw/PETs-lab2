@@ -263,7 +263,7 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
     client_public_key = group.G * private_key
     
     # initialise
-    hmac = []
+    hmacs = []
     address_cipher = address_plaintext
     message_cipher = message_plaintext
 
@@ -277,6 +277,16 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         hmac_key = key_material[:16]
         address_key = key_material[16:32]
         message_key = key_material[32:48]
+
+        h = HMAC.new(key=hmac_key, digestmod=SHA512)
+        if hmacs:
+            for prev_mac in hmacs:
+                h.update(prev_mac)
+
+        h.update(address_cipher)
+        h.update(message_cipher)
+        exp_mac = h.digest()
+        hmacs[-1] = exp_mac[:20]
 
     address_cipher = ...
     message_cipher = ...
