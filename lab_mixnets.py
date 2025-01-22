@@ -285,13 +285,14 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         address_cipher = aes_ctr_enc_dec(address_key, iv, address_cipher)
         message_cipher = aes_ctr_enc_dec(message_key, iv, message_cipher)
 
+
         h = HMAC.new(key=hmac_key, digestmod=SHA512)
-        if hmacs:
-            for prev_mac in hmacs:
+        if hmacs[1:]:
+            for prev_mac in hmacs[1:]:
                 h.update(prev_mac)
         h.update(address_cipher)
         h.update(message_cipher)
-        exp_mac = h.digest()
+        exp_mac = h.digest() ### error here and in this paragraph
         hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
         # Encrypt hmacs
@@ -300,8 +301,8 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
             # Ensure the IV is different for each hmac
             iv = pack("H6s", i, b"\x00" * 6)
 
-            hmac_plaintext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
-            new_hmacs += [hmac_plaintext]
+            hmac_ciphertext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
+            new_hmacs += [hmac_ciphertext]
 
         new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
 
