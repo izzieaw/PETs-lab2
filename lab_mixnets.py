@@ -266,6 +266,7 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
     hmacs = []
     address_cipher = address_plaintext
     message_cipher = message_plaintext
+    new_hmacs = []
 
 
     for i, mix_pk in enumerate(reversed(public_keys)):
@@ -296,7 +297,6 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
         # Encrypt hmacs
-        new_hmacs = [] ## should this be outside of the public key loop?
         for i, other_mac in enumerate(hmacs[1:]): 
             # Ensure the IV is different for each hmac
             iv = pack("H6s", i, b"\x00" * 6)
@@ -305,12 +305,13 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
             new_hmacs += [hmac_ciphertext]
 
         new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
+        hmacs = new_hmacs
 
     ## error in accumulating hmacs for different keys ?
 
     address_cipher = address_cipher
     message_cipher = message_cipher
-    hmacs = new_hmacs
+    hmacs = hmacs
     return NHopMixMessage(client_public_key, hmacs, address_cipher, message_cipher)
 
 
