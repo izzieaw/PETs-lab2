@@ -123,11 +123,27 @@ def mix_client_one_hop(group: Curve, public_key: PubKey, address: bytes, message
     private_key = Integer.random_range(min_inclusive=1, max_exclusive=group.order)
     client_public_key = group.G * private_key
 
-    # TODO: ADD CODE HERE
-    ...
-    address_cipher = ...
-    message_cipher = ...
-    expected_mac = ...
+    # First get a shared key
+    shared_element = public_key * private_key # mix pk * msg sk
+    key_material = SHA512.new(_point_to_bytes(shared_element)).digest()
+
+    # Use different parts of the shared key for different operations
+    hmac_key = key_material[:16]
+    address_key = key_material[16:32]
+    message_key = key_material[32:48]
+
+    # Encrypt the address and the message
+    iv = b"\x00" * 8
+
+    address_cipher = aes_ctr_enc_dec(address_key, iv, address)
+    message_cipher = aes_ctr_enc_dec(message_key, iv, message)
+
+    # Calculate HMAC
+    h = HMAC.new(key=hmac_key, digestmod=SHA512)
+    h.update(address)
+    h.update(message)
+    expected_mac = h.digest()
+    expected_mac = expected_mac[:20]
 
     return OneHopMixMessage(client_public_key, expected_mac, address_cipher, message_cipher)
 
