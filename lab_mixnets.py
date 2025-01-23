@@ -341,14 +341,14 @@ def generate_trace(number_of_users: int, threshold_size: int, number_of_rounds: 
     all_users = range(number_of_users)
 
     trace = []
-    # Generate traces in which Alice (user 0) is not sending
+    # Generate traces in which Alice (user 0) is not sending - this loop runs for 90% of number_of_rounds
     for _ in range(9 * number_of_rounds // 10):
         senders = sorted(random.sample(others, threshold_size))
         receivers = sorted(random.sample(all_users, threshold_size))
 
         trace += [(senders, receivers)]
 
-    # Generate traces in which Alice (user 0) is sending
+    # Generate traces in which Alice (user 0) is sending - this loop runs for 10% of number_of_rounds
     for _ in range(number_of_rounds // 10):
         senders = sorted([0] + random.sample(others, threshold_size - 1))
         # Alice sends to a friend
@@ -371,9 +371,14 @@ def analyze_trace(trace: Trace, target_number_of_friends: int, target: int = 0) 
     friends of the target.
     """
 
-    # TODO: ADD CODE HERE
-    ...
-    friends = ...
+    rows_with_alice = [(senders, receivers) for senders, receivers in trace if target in senders]
+    alice_receivers = [receiver for senders, receivers in rows_with_alice for receiver in receivers]
+
+    receiver_counts = Counter(alice_receivers)
+
+    top_receivers = receiver_counts.most_common(target_number_of_friends)
+    top_receiver_ids = [receiver for receiver, count in top_receivers]
+    friends = top_receiver_ids
 
     return friends
 
