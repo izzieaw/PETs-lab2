@@ -267,23 +267,26 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
     hmacs = []
     address_cipher = address_plaintext
     message_cipher = message_plaintext
-    blinding_factor = Integer(1)
+    blinding_factor = [Integer(1)] * len(public_keys)
+
+
+    for i in range(len(public_keys) - 1):
+        mix_pk = public_keys[i]
+        shared_element = mix_pk * private_key * blinding_factor[i]
+        key_material = SHA512.new(_point_to_bytes(shared_element)).digest()
+        blinding_factor[i+1] = blinding_factor[i] * Integer.from_bytes(key_material[48:])
 
 
     for i, mix_pk in enumerate(reversed(public_keys)):
         # First get a shared key
-        shared_element = mix_pk * private_key * blinding_factor
+        shared_element = mix_pk * private_key * blinding_factor[len(public_keys) - i - 1]
         key_material = SHA512.new(_point_to_bytes(shared_element)).digest()
-
-        # Extract a blinding factor for the public_key
-        blinding_factor = blinding_factor * Integer.from_bytes(key_material[48:])
 
 
         # Use different parts of the shared key for different operations
         hmac_key = key_material[:16]
         address_key = key_material[16:32]
         message_key = key_material[32:48]
-
 
 
         # Encrypt address & message
