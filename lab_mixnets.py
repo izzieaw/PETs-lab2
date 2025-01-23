@@ -192,11 +192,9 @@ def mix_server_n_hop(private_key: PrivKey, message_list: list[NHopMixMessage], f
         message_key = key_material[32:48]
 
 
-        ##### THIS SECTION: GET RID OF LINE OF CODE AND UNCOMMENT LAST 2 LINES
         # Extract a blinding factor for the public_key
-        ##blinding_factor = Integer.from_bytes(key_material[48:])
-        ##new_ec_public_key =  msg.ec_public_key * blinding_factor
-        new_ec_public_key = msg.ec_public_key
+        blinding_factor = Integer.from_bytes(key_material[48:])
+        new_ec_public_key =  msg.ec_public_key * blinding_factor
 
         # Check the HMAC
         h = HMAC.new(key=hmac_key, digestmod=SHA512)
@@ -263,17 +261,23 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
     # Generate a fresh public key
     private_key = Integer.random_range(min_inclusive=1, max_exclusive=group.order)
     client_public_key = group.G * private_key
+
     
     # initialise
     hmacs = []
     address_cipher = address_plaintext
     message_cipher = message_plaintext
+    blinding_factor = Integer(1)
 
 
     for i, mix_pk in enumerate(reversed(public_keys)):
         # First get a shared key
-        shared_element = mix_pk * private_key
+        shared_element = mix_pk * private_key * blinding_factor
         key_material = SHA512.new(_point_to_bytes(shared_element)).digest()
+
+        # Extract a blinding factor for the public_key
+        blinding_factor = blinding_factor * Integer.from_bytes(key_material[48:])
+
 
         # Use different parts of the shared key for different operations
         hmac_key = key_material[:16]
