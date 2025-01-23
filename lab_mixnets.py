@@ -209,6 +209,7 @@ def mix_server_n_hop(private_key: PrivKey, message_list: list[NHopMixMessage], f
 
         expected_mac = h.digest()
 
+
         if not msg.hmacs[0] == expected_mac[:20]:
             raise Exception("HMAC check failure")
 
@@ -226,6 +227,7 @@ def mix_server_n_hop(private_key: PrivKey, message_list: list[NHopMixMessage], f
 
         address_plaintext = aes_ctr_enc_dec(address_key, iv, msg.address)
         message_plaintext = aes_ctr_enc_dec(message_key, iv, msg.message)
+
 
         if final:
             # Decode the address and message
@@ -266,7 +268,6 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
     hmacs = []
     address_cipher = address_plaintext
     message_cipher = message_plaintext
-    new_hmacs = []
 
 
     for i, mix_pk in enumerate(reversed(public_keys)):
@@ -280,6 +281,7 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         message_key = key_material[32:48]
 
 
+
         # Encrypt address & message
         iv = b"\x00" * 8
 
@@ -287,27 +289,29 @@ def mix_client_n_hop(group: Curve, public_keys: list[PubKey], address: bytes, me
         message_cipher = aes_ctr_enc_dec(message_key, iv, message_cipher)
 
 
-        h = HMAC.new(key=hmac_key, digestmod=SHA512)
-        for prev_mac in hmacs: # hmacs[1:] ?
-            h.update(prev_mac)
-        h.update(address_cipher)
-        h.update(message_cipher)
-        exp_mac = h.digest() 
-
-        hmacs.insert(0, exp_mac[:20]) # adds new HMAC to top of array
 
         # Encrypt hmacs
-        for i, other_mac in enumerate(hmacs[1:]): 
+        new_hmacs = []
+        for i, other_mac in enumerate(hmacs): 
             # Ensure the IV is different for each hmac
             iv = pack("H6s", i, b"\x00" * 6)
 
             hmac_ciphertext = aes_ctr_enc_dec(hmac_key, iv, other_mac)
             new_hmacs += [hmac_ciphertext]
 
-        new_hmacs.insert(0, hmacs[0]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
+
+        h = HMAC.new(key=hmac_key, digestmod=SHA512)
+        for prev_mac in new_hmacs: # not hmacs[1:] because it's before new HMAC is prepended
+            h.update(prev_mac)
+        h.update(address_cipher)
+        h.update(message_cipher)
+        exp_mac = h.digest() 
+
+
+        new_hmacs.insert(0, exp_mac[:20]) # add the newest unencrypted HMAC to the top of the list of now encrypted HMACs
         hmacs = new_hmacs
 
-    ## error in accumulating hmacs for different keys ?
+
 
     address_cipher = address_cipher
     message_cipher = message_cipher
