@@ -389,7 +389,7 @@ def analyze_trace(trace: Trace, target_number_of_friends: int, target: int = 0) 
 # The mix packet format you worked on uses AES-CTR with an IV set to all zeros.
 # Explain whether this is a security concern and justify your answer.
 
-""" TODO: Your answer HERE """
+""" It is not a security concern, it would only be a concern if there was a key reuse, which there isn't. """
 
 #####################################################
 # TASK Q2 - Answer the following question:
