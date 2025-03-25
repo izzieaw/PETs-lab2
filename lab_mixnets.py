@@ -401,4 +401,11 @@ def analyze_trace(trace: Trace, target_number_of_friends: int, target: int = 0) 
 # from non-target senders to receivers?
 # Is the correctness of the result returned dependent on this background distribution?
 
-""" TODO: Your answer HERE """
+""" This implementation makes the assumption that traffic from non-target senders to receivers is distributed evenly. If in reality it was not
+    evenly distributed, say most non-target senders message one of (or a group of) the receivers disproportionally often, then this implementation 
+    could mistakely interpret that as Alice communicating with them and being one of her 'friends'. 
+
+    The correctness of the result is dependent on this background distribution. In the case that the assumption is accurate and the traffic from 
+    non-target senders to receivers is distributed evenly on the receiver end, then the result returned will be more accurate. In the case that this
+    distribution is not even, the popularity of those receivers will skew the implementation's findings - the more uneven the distribution, the less 
+    likely the result returned will be accurate.  """
