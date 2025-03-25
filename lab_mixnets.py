@@ -389,7 +389,10 @@ def analyze_trace(trace: Trace, target_number_of_friends: int, target: int = 0) 
 # The mix packet format you worked on uses AES-CTR with an IV set to all zeros.
 # Explain whether this is a security concern and justify your answer.
 
-""" It is not a security concern, it would only be a concern if there was a key reuse, which there isn't. """
+""" It is not a security concern, it would only be a concern if there was a key reuse, which there isn't. As a fresh key pair is generated
+    for every new message, and as the key pair are generated as random group elements, there is no linkeability between the key and message, 
+    therefore even though the same IV of zeros is used for every message, the use of fresh keys eliminate any potential security concerns such
+    as finding patterns in ciphertexts produced from the same/similar messages."""
 
 #####################################################
 # TASK Q2 - Answer the following question:
